@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bankrolled: the 2026 midterms in $100 bills</title>
+<meta name="description" content="Every 2026 House and Senate race as a stack of $100 bills, to scale, on a map of the US. What each vote cost and where the money went, with every number linked to its source.">
+<meta property="og:title" content="Bankrolled: the 2026 midterms in $100 bills">
+<meta property="og:description" content="Every 2026 House and Senate race as a stack of $100 bills, to scale. What each vote cost, and where the money went.">
+<meta property="og:url" content="https://midterms.trevorboardman.com/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://midterms.trevorboardman.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:image:alt" content="A 3D map of the US with every 2026 House and Senate race as a stack of $100 bills; all of it together would stand 4 miles tall, with the campaigns' final reports still to come.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0e13">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Public+Sans:ital,wght@0,300;0,400;0,600;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stacked.css">
+</head>
+<body>
+<section class="stage" aria-label="Map of the 2026 House and Senate races as stacks of $100 bills">
+  <div id="scene" class="scene"></div>
+  <div id="labels" class="labels" aria-hidden="true"></div>
+  <div id="tour-labels" class="labels tour-labels" aria-hidden="true"></div>
+  <div class="hud-scrim" aria-hidden="true"></div>
+
+  <header class="hud-top">
+    <p class="kicker" id="kicker">2026 House and Senate races in $100 bills</p>
+    <h1 id="headline"><span id="hl-amount">&nbsp;</span><span id="hl-height" class="hl-height">&nbsp;</span></h1>
+    <p id="dek" class="dek">Loading the House and Senate races…</p>
+    <p id="dek-short" class="dek-short"></p>
+  </header>
+
+  <div class="hud-bottom">
+    <div class="replay-row">
+      <button id="play" class="play" type="button" aria-label="Replay the money, January 2025 to election day" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-replay" d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.6 0 3 .7 4 1.8V2h1.5v5h-5V5.5h2.6A4 4 0 1 0 12 8z"/><path class="i-play" d="M4 2.5v11l9-5.5z"/><path class="i-pause" d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg><span id="play-label">Replay</span></button>
+      <input id="scrub" class="scrub" type="range" min="0" max="0" value="0" aria-label="Week of the replay" disabled>
+      <div class="clock" aria-live="polite">
+        <div id="clock-date" class="clock-date"></div>
+        <div id="clock-sub" class="clock-sub"></div>
+      </div>
+      <button id="fly" class="fly" type="button" aria-label="Fly through the biggest races"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg><span class="long">Fly-through</span><span class="short">Fly</span></button>
+    </div>
+    <div class="controls">
+      <div class="seg seg-mode" role="radiogroup" aria-label="Height shows">
+        <button role="radio" aria-checked="true" data-mode="cash">Dollars<span class="wide">, to scale</span></button>
+        <button role="radio" aria-checked="false" data-mode="pervote">Per vote</button>
+      </div>
+      <div class="chamber" role="radiogroup" aria-label="Races">
+        <div class="seg seg-chamber">
+          <button role="radio" aria-checked="true" data-chamber="all">Congress</button>
+          <button role="radio" aria-checked="false" data-chamber="senate">Senate</button>
+          <button role="radio" aria-checked="false" data-chamber="house">House</button>
+        </div>
+        <div class="seg seg-gov">
+          <button role="radio" aria-checked="false" data-chamber="governor">Governors</button>
+        </div>
+      </div>
+      <div class="search">
+        <label class="visually-hidden" for="search">Find a race or candidate</label>
+        <input id="search" type="search" placeholder="Find a race or candidate" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-list" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
+        <ul id="search-list" class="search-list" role="listbox" aria-label="Matching races" hidden></ul>
+        <div id="search-status" class="visually-hidden" role="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <label class="split-pick"><span>Color shows</span>
+      <select id="split" aria-label="Color on each stack shows">
+        <option value="source">Who spent it</option>
+        <option value="stance">For or against</option>
+        <option value="party">Party</option>
+        <option value="leader">Leader in the count</option>
+      </select>
+    </label>
+    <div id="legend-keys" class="legend-keys"><span class="key"><i class="sw camp"></i>Campaigns</span><span class="key"><i class="sw out"></i>Outside groups</span></div>
+    <p id="legend-note" class="legend-note" hidden></p>
+    <span id="legend-scale" class="scale">Height to scale: $1 million in $100 bills stands 3.6 ft</span>
+    <span id="legend-asof" class="scale asof"></span>
+  </div>
+
+  <div id="tip" class="tip" hidden></div>
+
+  <div class="tour-scrim" aria-hidden="true"></div>
+  <div id="tour" class="tour" aria-live="polite" hidden>
+    <p id="tour-cap" class="tour-cap"></p>
+    <p id="tour-sub" class="tour-sub"></p>
+    <ol id="tour-dots" class="tour-dots" aria-hidden="true"></ol>
+  </div>
+  <button id="tour-paused" class="tour-paused" type="button" hidden>Paused. Tap to carry on</button>
+  <button id="tour-skip" class="tour-skip" type="button" hidden>Skip</button>
+  <div class="gl-lost-msg" role="alert">
+    <p>Your browser paused the 3D view to save memory.</p>
+    <button id="gl-reload" type="button">Reload the view</button>
+  </div>
+
+  <aside id="sheet" class="sheet" tabindex="-1" aria-live="polite" hidden>
+    <button class="sheet-close" type="button" aria-label="Close">×</button>
+    <div id="sheet-body"></div>
+  </aside>
+
+  <p class="nogl" hidden>This map needs WebGL, which isn't available in this browser. Every number is in the sections below.</p>
+  <a class="scroll-cue" href="#more">Where the money came from and went, and every race</a>
+</section>
+
+<main class="article" id="more">
+  <section class="intro">
+    <p id="intro-big" class="big-line"></p>
+    <p id="intro-buys" class="buys-line"></p>
+    <p id="intro-known" class="buys-line"></p>
+    <p id="asof" class="note-line"></p>
+  </section>
+
+  <section class="rankings" aria-label="Spending per vote, highest and lowest">
+    <div>
+      <h2 id="rank-high-h">Most spent per vote</h2>
+      <p class="h2sub">The ten races that drew the most per vote counted: campaigns and outside groups, divided by votes counted, in races with two or more candidates on the ballot.</p>
+      <ol id="rank-high" class="rank"></ol>
+    </div>
+    <details class="rank-low" id="rank-low-wrap" open>
+      <summary><h2 id="rank-low-h">Least spent per vote</h2><p class="h2sub">The ten races that drew the least per vote counted.</p></summary>
+      <ol id="rank-low" class="rank"></ol>
+    </details>
+  </section>
+
+  <section class="talk" id="talk" aria-labelledby="talk-h">
+    <h2 id="talk-h">Does money talk?</h2>
+    <div id="talk-body"></div>
+  </section>
+
+  <section class="governors" id="governors"></section>
+
+  <section class="where came" id="came" hidden>
+    <h2 id="came-h">Where the money came from</h2>
+    <p class="h2sub" id="came-sub"></p>
+    <div id="came-body"></div>
+  </section>
+
+  <section class="where" id="where" hidden>
+    <h2 id="where-h">Where the money went</h2>
+    <p class="h2sub" id="where-sub"></p>
+    <div id="where-body"></div>
+  </section>
+
+  <details class="all-races" id="all-races">
+    <summary>Every race, every number</summary>
+    <div class="table-wrap">
+      <table id="table">
+        <thead><tr>
+          <th scope="col"><button data-sort="n">Race</button></th>
+          <th scope="col" class="num"><button data-sort="v">Votes counted</button></th>
+          <th scope="col" class="num"><button data-sort="sp">Campaigns</button></th>
+          <th scope="col" class="num"><button data-sort="out">Outside groups</button></th>
+          <th scope="col" class="num"><button data-sort="price">Per vote</button></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
+  <section class="method" id="method">
+    <h2>How this is made</h2>
+    <p><strong>The bill.</strong> Height is to scale. A $100 bill is 0.0043 inches thick, the figure the Bureau of Engraving and Printing gave on its own site (<a href="https://web.archive.org/web/20000817130540/http://www.bep.treas.gov/allfacts.htm" target="_blank" rel="noopener">BEP facts and trivia, archived August 2000</a>; the same page puts over 14&frac12; million notes in a stack a mile high, which agrees). The Bureau no longer publishes the thickness; it still gives every note, whatever its denomination, a weight of about one gram (<a href="https://www.bep.gov/currency/faqs" target="_blank" rel="noopener">BEP</a>), and every note since 1929 measures 6.14 by 2.61 inches (<a href="https://www.uscurrency.gov/denominations/100" target="_blank" rel="noopener">uscurrency.gov</a>). So $1 million in $100s is 10,000 bills standing 43 inches, 3.6 ft, and the fly-through opens on one such block, to scale every way, beside a person.</p>
+    <p><strong>The stacks.</strong> Every stack, and three landmarks standing where they really are (the Space Needle in Seattle, the Gateway Arch in St. Louis and the Washington Monument in DC), is drawn to that one scale. The map, and the width of each stack, are not to scale. Each stack is drawn as blocks of $1 million, and the strap round each block marks whose money it is: violet for campaigns, mustard for outside groups. In the per-vote view, height is dollars per vote and is not a physical height.</p>
+    <p><strong>Opened races.</strong> An opened race is zoomed to the scale of its state's races for the same office (Texas's House races, say), so those compare by eye as you step through them with the arrows; the sheet gives each one's height in feet.</p>
+    <p><strong>Comparisons.</strong> Heights: a basketball hoop, 10 ft (<a href="https://official.nba.com/rule-no-1-court-dimensions/" target="_blank" rel="noopener">NBA rules</a>); a male giraffe, up to 18 ft (<a href="https://animals.sandiegozoo.org/animals/giraffe" target="_blank" rel="noopener">San Diego Zoo</a>); a Hollywood Sign letter, 45 ft (<a href="https://www.hollywoodsign.org/news-updates/september-2022" target="_blank" rel="noopener">Hollywood Sign Trust</a>); Washington's head on Mount Rushmore, 60 ft (<a href="https://www.nps.gov/moru/learn/kidsyouth/how-big-are-the-heads.htm" target="_blank" rel="noopener">NPS</a>); Old Faithful's average eruption, 130 ft (<a href="https://www.nps.gov/yell/planyourvisit/exploreoldfaithful.htm" target="_blank" rel="noopener">NPS</a>); the Statue of Liberty, 305 ft ground to torch (<a href="https://www.nps.gov/stli/learn/historyculture/statue-statistics.htm" target="_blank" rel="noopener">NPS</a>); a Saturn V, 363 ft (<a href="https://www.nasa.gov/learning-resources/for-kids-and-students/what-was-the-saturn-v-grades-5-8/" target="_blank" rel="noopener">NASA</a>). Race comparisons, one per race: a height or a length is used when one gives a count between 2 and 150, and an area only when none does: a US note, 6.14 by 2.61 in (<a href="https://www.uscurrency.gov/denominations/100" target="_blank" rel="noopener">uscurrency.gov</a>); an average American man, 68.9 in (<a href="https://www.cdc.gov/nchs/fastats/body-measurements.htm" target="_blank" rel="noopener">CDC</a>); a 2025 Honda Civic sedan, 55.7 in tall and 184.8 in long (<a href="https://hondanews.com/en-US/releases/release-c28e8d1efb94e520fef21ff3f800cb30-2025-honda-civic-sedan-specifications-features" target="_blank" rel="noopener">Honda</a>); a shipping container, 8 ft 6 in tall (<a href="https://www.maersk.com/logistics-explained/transportation-and-freight/2023/08/28/freight-container" target="_blank" rel="noopener">Maersk</a>); the Empire State Building, 1,454 ft; an NBA court, 94 by 50 ft (<a href="https://www.nba.com/news/about" target="_blank" rel="noopener">NBA</a>); a Boeing 747-8, 250 ft 2 in long (<a href="https://boeing.mediaroom.com/2010-10-15-Boeing-Joins-Fuselage-Sections-for-First-747-8-Intercontinental" target="_blank" rel="noopener">Boeing</a>); a football field with end zones, 360 by 160 ft (<a href="https://operations.nfl.com/the-rules/nfl-rulebook/" target="_blank" rel="noopener">NFL rulebook, Rule 1</a>); a marathon, 26 miles 385 yards (<a href="https://worldathletics.org/disciplines/road-running/marathon" target="_blank" rel="noopener">World Athletics</a>); a doubles tennis court, 78 by 36 ft (<a href="https://www.itftennis.com/media/7221/2026-rules-of-tennis-english.pdf" target="_blank" rel="noopener">ITF Rules of Tennis</a>). Costs: a free school lunch, $4.76, the federal reimbursement for 2026-27 in the contiguous states ($4.31 plus 45 cents, <a href="https://www.govinfo.gov/content/pkg/FR-2026-07-16/html/2026-14252.htm" target="_blank" rel="noopener">Federal Register</a>); a teacher's year, $74,495, the average public school teacher salary in 2024-25 (<a href="https://www.nea.org/resource-library/rankings-estimates" target="_blank" rel="noopener">NEA</a>); a family's health coverage, $28,303, the average yearly premium for employer family coverage in 2026 (<a href="https://www.kff.org/health-costs/2026-employer-health-benefits-survey/" target="_blank" rel="noopener">KFF</a>); a household's income, $87,460, the 2025 median (<a href="https://www.census.gov/library/stories/2026/09/median-household-income.html" target="_blank" rel="noopener">Census Bureau</a>). Landmarks and the fly-through use published heights: Washington Monument 555 ft and Statue of Liberty 305 ft, ground to torch (National Park Service); Gateway Arch 630 ft (National Park Service); Space Needle 605 ft (Space Needle LLC); Empire State Building 1,454 ft to the tip; One World Trade Center 1,776 ft; Mount Whitney 14,505 ft and Denali 20,310 ft (US Geological Survey; Denali as surveyed in 2015). In the fly-through, One World Trade Center is drawn after its architects' design: a 186 ft podium 200 ft square, a tower whose plan turns 45 degrees as it rises, roof at 1,368 ft and spire to 1,776 ft. Denali and Mount Whitney are drawn beside the one-stack column at their true heights; their outlines are simplified and narrower than life.</p>
+    <p><strong>Senate stacks</strong> stand near the middle of their state. House stacks are spread across the state and are not at their districts' locations; several states drew new districts for 2026.</p>
+    <p><strong>Votes</strong> are unofficial counts from <a href="https://civicapi.org">civicAPI</a>, updated daily. Counting goes on for days to weeks after election night, longest in states that vote mostly by mail, so the money per vote in those races falls as ballots are added. Races whose count rose in the last day, or that civicAPI shows under 100% of precincts, are marked still counting. civicAPI's percent reporting counts precincts, not ballots.</p>
+    <p><strong>Campaign spending</strong> is what each candidate's own committees reported to the <a href="https://www.fec.gov/">Federal Election Commission</a>: total disbursements, minus money moved between the candidate's own committees. House figures are the FEC's totals for the 2025–26 cycle, which for a few new campaigns include a first report reaching back into 2023 or 2024. Senate figures cover the whole six-year election period. Most campaigns' latest reports run to October 14; spending in the final weeks arrives with the post-general reports due December 3. Every published total matched the FEC's own API to the cent in a 25-candidate spot check.</p>
+    <p><strong>Outside spending</strong> is independent expenditures for or against a candidate, from the 24- and 48-hour notices groups file with the FEC as they spend. Amended notices and the same expenditure noticed twice are counted once. Notices cover only larger expenditures, and some are estimates later revised. A check of 14 group-candidate pairs worth $332.6 million against the groups' own regular reports found no expenditure counted twice; the notices ran 0.31% higher, mostly from spending that falls in the next reporting period. Party coordinated spending is not included. Notices are counted from January 1, 2025, primaries included; a Senate campaign's spending covers its whole six-year election period, so for a sitting senator the campaign figure covers a longer stretch than the outside money beside it.</p>
+    <p><strong>The replay</strong> spreads each campaign's spending evenly over the days of the FEC report that covers it, because the FEC reports totals per period, not per day. Outside spending is added on each notice's date. <span id="replay-diff">For a few candidates the FEC's published total spent and the spending in their filed reports differ</span>; that difference is added on their last report date, so the replay ends on the published totals.</p>
+    <p id="method-where"></p>
+    <p><strong>Per vote</strong> is spending divided by all votes counted in the race. For one candidate it is that candidate's spending over that candidate's votes. It is a measure of how much money a race drew, not of what any vote was worth.</p>
+    <p id="method-gov"><strong>Governors</strong> file with their states, not the FEC. Each state's filings were collected from its own campaign finance site and checked against the reports' own totals and balances; each governor's row and race sheet links the filings and says what was counted. Outside groups' spending on governors' races is not included.</p>
+    <p id="method-known"></p>
+    <p><strong>Matching</strong> ballot names to FEC records uses the race, surname, party and first name. Nine matches were set by hand, each with a written reason. Candidates who raise or spend under $5,000 do not have to register with the FEC.</p>
+    <p>No race is called here. Every figure links to the public record it comes from, and the race-by-race numbers can be downloaded as <a href="data/races.json">one data file</a>.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Made by <a href="https://trevorboardman.com">Trevor Boardman</a>. Results from <a href="https://civicapi.org">civicAPI</a>. Money from the <a href="https://www.fec.gov/data/browse-data/?tab=bulk-data">FEC</a> and each state's campaign finance office, linked on its governor's row. Map from the US Census Bureau via us-atlas.</p>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="stacked.js"></script>
+<script src="ui.js"></script>
+<script src="eggs.js"></script>
+</body>
+</html>
